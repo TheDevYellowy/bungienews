@@ -3,8 +3,8 @@ const fs = require("node:fs");
 require('dotenv').config();
 var lastUpdate;
 
-if(!fs.existsSync("./logs")) fs.mkdirSync("./logs");
-const logs = fs.createWriteStream(`./logs/latest.txt`);
+if(!fs.existsSync(`${__dirname}/logs`)) fs.mkdirSync(`${__dirname}/logs`);
+const logs = fs.createWriteStream(`${__dirname}/logs/latest.txt`);
 
 const client = new AtpAgent({
   service: "https://bsky.social"
@@ -14,7 +14,7 @@ client.login({
   identifier: process.env.email,
   password: process.env.password
 }).then(async () => {
-  logs.write(`Successfully logged in to ${client.session.handle}`);
+  logs.write(`Successfully logged in to ${client.session.handle}\n`);
   await getDataAndPost();
   setInterval(async() => {
     await getDataAndPost();
