@@ -1,6 +1,8 @@
 const { AtpAgent } = require("@atproto/api");
 const fs = require("node:fs");
 require('dotenv').config();
+const maxRetries = 5;
+var retries = 0;
 var lastUpdate;
 
 if(!fs.existsSync(`${__dirname}/logs`)) fs.mkdirSync(`${__dirname}/logs`);
@@ -18,7 +20,7 @@ client.login({
   await getDataAndPost();
   setInterval(async() => {
     await getDataAndPost();
-  }, 30000);
+  }, 1.8e+6);
 });
 
 async function alreadyPosted(url) {
@@ -50,7 +52,14 @@ async function getDataAndPost() {
     },
     "body": null,
     "method": "GET"
+  }).catch((err) => {
+    logs.write(`[${retries}/${maxRetries}] Error while fetching data from Bungie.net: ${err}`);
+    if(retries > maxRetries) return;
+
+    retries++;
+    return getDataAndPost();
   });
+  retries = 0;
   const postData = await postRequest.json();
   if(lastUpdate && lastUpdate > new Date(postData.entries[0].created_at).getTime()) return;
   logs.write("Found new post from bungie api\n");
