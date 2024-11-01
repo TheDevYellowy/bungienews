@@ -25,8 +25,16 @@ client.login({
 
 async function alreadyPosted(url) {
   const { success, data } = await client.getAuthorFeed({ actor: client.did });
+  let post = null;
+  let i = 0;
   if(success) {
-    if(data.feed[0].post.embed.external.uri == url) return true;
+    while(!post) {
+      if(i++ > data.feed.length) break;
+      if(data.feed[i].post.embed) post = data.feed[i].post;
+      else i++
+    }
+    if(!post) return true;
+    if(post.embed.external.uri == url) return true;
     else return false;
   } else return true;
 }
