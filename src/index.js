@@ -50,7 +50,7 @@ async function getDataAndPost() {
   }).catch((err) => {
     logs.write(`[${retries}/${maxRetries}] Error while fetching data from Bungie.net: ${err}\n`);
     if(retries == 0) console.error(err);
-    if(retries > maxRetries) return;
+    if(retries >= maxRetries) return;
 
     retries++;
     return getDataAndPost();
