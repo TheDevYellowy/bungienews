@@ -34,32 +34,21 @@ async function alreadyPosted(url) {
 async function getDataAndPost() {
   const postRequest = await fetch("https://cdn.contentstack.io/v3/content_types/news_article/entries/?query=%7B%22category%22%3A%7B%22%24regex%22%3A%22community%7Cdestiny%7Cupdates%22%7D%7D&locale=en-us&desc=date&include_count=true&skip=0&limit=10&environment=live", {
     "headers": {
-      "accept": "*/*",
-      "accept-language": "en-US,en;q=0.9",
       "access_token": "cs7929311353379d90697fc0b6",
       "api_key": "blte410e3b15535c144",
-      "content-type": "application/json; charset=UTF-8",
-      "priority": "u=1, i",
-      "sec-ch-ua": "\"Chromium\";v=\"130\", \"Google Chrome\";v=\"130\", \"Not?A_Brand\";v=\"99\"",
-      "sec-ch-ua-mobile": "?0",
-      "sec-ch-ua-platform": "\"Windows\"",
-      "sec-fetch-dest": "empty",
-      "sec-fetch-mode": "cors",
-      "sec-fetch-site": "cross-site",
       "x-user-agent": "contentstack-web/3.15.0",
-      "Referer": "https://www.bungie.net/",
-      "Referrer-Policy": "strict-origin-when-cross-origin"
     },
-    "body": null,
     "method": "GET"
   }).catch((err) => {
-    logs.write(`[${retries}/${maxRetries}] Error while fetching data from Bungie.net: ${err}`);
+    logs.write(`[${retries}/${maxRetries}] Error while fetching data from Bungie.net: ${err}\n`);
+    if(retries == 0) console.error(err);
     if(retries > maxRetries) return;
 
     retries++;
     return getDataAndPost();
   });
   retries = 0;
+  if(!postRequest) return;
   const postData = await postRequest.json();
   if(lastUpdate && lastUpdate > new Date(postData.entries[0].created_at).getTime()) return;
   logs.write("Found new post from bungie api\n");
