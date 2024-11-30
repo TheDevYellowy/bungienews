@@ -4,6 +4,8 @@ require('dotenv').config();
 const maxRetries = 5;
 var retries = 0;
 var lastUpdate;
+const reposted = {};
+const bungie = ["bungiehelp.bungie.net"];
 
 if(!fs.existsSync(`${__dirname}/logs`)) fs.mkdirSync(`${__dirname}/logs`);
 const logs = fs.createWriteStream(`${__dirname}/logs/latest.txt`);
@@ -17,11 +19,44 @@ client.login({
   password: process.env.password
 }).then(async () => {
   logs.write(`Successfully logged in to ${client.session.handle}\n`);
+  await init();
   await getDataAndPost();
+  await repost();
   setInterval(async() => {
     await getDataAndPost();
-  }, 1.8e+6);
+  }, 1000 * 60 * 15); // 15 minutes
+
+  setInterval(async() => {
+    await repost();
+  }, 1000 * 60 * 13); // 13 minutes
 });
+
+async function init() {
+  const {success, data} = await client.getAuthorFeed({ actor: client.did });
+  if(success) {
+    data.feed.forEach(({ post }) => {
+      const handle = post.author.handle;
+      if(handle == "bungienews.bsky.social") return;
+      if(reposted[handle]) return;
+
+      reposted[handle] = post.cid;
+    });
+  }
+}
+
+async function repost() {
+  for (const account of bungie) {
+    const { data: hdata } = await client.resolveHandle({ handle: account });
+    const {success, data} = await client.getAuthorFeed({ actor: hdata.did, includePins: false });
+    if(success) {
+      const { post } = data.feed[0];
+      if(reposted[account] == post.cid) return;
+
+      await client.repost(post.uri, post.cid);
+      reposted[account] = post.cid;
+    }
+  }
+}
 
 async function alreadyPosted(url) {
   const { success, data } = await client.getAuthorFeed({ actor: client.did });
@@ -104,5 +139,5 @@ async function getDataAndPost() {
 process.on("beforeExit", () => {
   logs.close();
   const date = new Date();
-  fs.renameSync("./logs/latest.txt", `./logs/${date.getMonth()+1}-${date.getDate()}-${date.getFullYear().toString().slice(2)}.txt`);
+  fs.renameSync("./src/logs/latest.txt", `./src/logs/${date.getMonth()+1}-${date.getDate()}-${date.getFullYear().toString().slice(2)}.txt`);
 });
