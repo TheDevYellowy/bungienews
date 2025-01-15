@@ -14,28 +14,28 @@ const client = new AtpAgent({
   service: "https://bsky.social",
 });
 
-client
-  .login({
-    identifier: process.env.email,
-    password: process.env.password,
-  })
-  .then(async () => {
-    logs.write(`Successfully logged in to ${client.session.handle}\n`);
-    await init();
-    await getDataAndPost();
-    await repost();
-    setInterval(async () => {
-      await getDataAndPost();
-    }, 1000 * 60 * 15); // 15 minutes
+// client
+//   .login({
+//     identifier: process.env.email,
+//     password: process.env.password,
+//   })
+//   .then(async () => {
+logs.write(`Successfully logged in to ${client.session.handle}\n`);
+// await init();
+await getDataAndPost();
+await repost();
+setInterval(async () => {
+  await getDataAndPost();
+}, 1000 * 60 * 15); // 15 minutes
 
-    setInterval(async () => {
-      await repost();
-    }, 1000 * 60 * 13); // 13 minutes
-  })
-  .catch((err) => {
-    console.error({ err });
-    process.exit();
-  });
+setInterval(async () => {
+  await repost();
+}, 1000 * 60 * 13); // 13 minutes
+// })
+// .catch((err) => {
+//   console.error({ err });
+//   process.exit();
+// });
 
 async function init() {
   const { success, data } = await client.getAuthorFeed({ actor: client.did });
