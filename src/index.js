@@ -131,25 +131,33 @@ async function getDataAndPost() {
 
   try {
     logs.write("Attempting to post to bluesky\n");
-    const { data } = await client.uploadBlob(imageUint8);
-    const { uri, cid } = await client.post({
-      text: `New post on the bungie.net homepage\n${latestPost.title}`,
-      tags: ["bungie", "destiny2", "destinythegame"],
-      embed: {
-        $type: "app.bsky.embed.external",
-        external: {
-          uri: `https://www.bungie.net/7/en/News/article${latestPost.url.hosted_url}`,
-          title: latestPost.title,
-          description: latestPost.subtitle,
-          thumb: data.blob,
-        },
-      },
-      createdAt: new Date().toISOString(),
-    });
+    // const { data } = await client.uploadBlob(imageUint8);
+    // const { uri, cid } = await client.post({
+    //   text: `New post on the bungie.net homepage\n${latestPost.title}`,
+    //   tags: ["bungie", "destiny2", "destinythegame"],
+    //   embed: {
+    //     $type: "app.bsky.embed.external",
+    //     external: {
+    //       uri: `https://www.bungie.net/7/en/News/article${latestPost.url.hosted_url}`,
+    //       title: latestPost.title,
+    //       description: latestPost.subtitle,
+    //       thumb: data.blob,
+    //     },
+    //   },
+    //   createdAt: new Date().toISOString(),
+    // });
 
-    await client.like(uri, cid);
+    // await client.like(uri, cid);
 
     logs.write(`Created post at ${new Date(lastUpdate).toString()}`);
+    if (!fs.existsSync("./src/data"))
+      fs.mkdirSync("./src/data", { recursive: true });
+
+    if (!fs.existsSync(`./src/data/${latestPost.uid}.json`))
+      fs.writeFileSync(
+        `./src/data/${latestPost.uid}.json`,
+        JSON.stringify(latestPost, null, 2)
+      );
   } catch (error) {
     logs.write(`There was an error posting the news: ${error}`);
     console.error(`There was an error posting the news: ${error}`);
