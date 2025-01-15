@@ -20,7 +20,7 @@ const client = new AtpAgent({
 //     password: process.env.password,
 //   })
 //   .then(async () => {
-logs.write(`Successfully logged in to ${client.session.handle}\n`);
+// logs.write(`Successfully logged in to ${client.session.handle}\n`);
 // await init();
 getDataAndPost();
 // await repost();
