@@ -22,8 +22,8 @@ const client = new AtpAgent({
 //   .then(async () => {
 logs.write(`Successfully logged in to ${client.session.handle}\n`);
 // await init();
-await getDataAndPost();
-await repost();
+getDataAndPost();
+// await repost();
 setInterval(async () => {
   await getDataAndPost();
 }, 1000 * 60 * 15); // 15 minutes
@@ -120,9 +120,10 @@ async function getDataAndPost() {
   const imageBuffer = await imageRequest.arrayBuffer();
   const imageUint8 = new Uint8Array(imageBuffer);
 
-  const posted = await alreadyPosted(
-    `https://www.bungie.net/7/en/News/article${latestPost.url.hosted_url}`
-  );
+  // const posted = await alreadyPosted(
+  //   `https://www.bungie.net/7/en/News/article${latestPost.url.hosted_url}`
+  // );
+  const posted = false;
 
   if (posted) {
     logs.write(`The post was already forwarded to Bluesky, exiting function\n`);
