@@ -28,9 +28,9 @@ setInterval(async () => {
   await getDataAndPost();
 }, 1000 * 60 * 15); // 15 minutes
 
-setInterval(async () => {
-  await repost();
-}, 1000 * 60 * 13); // 13 minutes
+// setInterval(async () => {
+//   await repost();
+// }, 1000 * 60 * 13); // 13 minutes
 // })
 // .catch((err) => {
 //   console.error({ err });
