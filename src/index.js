@@ -26,7 +26,7 @@ getDataAndPost();
 // await repost();
 setInterval(async () => {
   await getDataAndPost();
-}, 1000 * 60 * 15); // 15 minutes
+}, 1000 * 60 * 30); // 30 minutes
 
 // setInterval(async () => {
 //   await repost();
@@ -85,7 +85,9 @@ async function alreadyPosted(url) {
 
 async function getDataAndPost() {
   const postRequest = await fetch(
-    "https://cdn.contentstack.io/v3/content_types/news_article/entries/?query=%7B%22category%22%3A%7B%22%24regex%22%3A%22community%7Cdestiny%7Cupdates%22%7D%7D&locale=en-us&desc=date&include_count=true&skip=0&limit=10&environment=live",
+    `https://cdn.contentstack.io/v3/content_types/news_article/entries/?query=${encodeURIComponent(
+      '{"category":{"$regex":"community|destiny|updates"}}'
+    )}&locale=en-us&desc=date&include_count=true&skip=0&limit=10&environment=live`,
     {
       headers: {
         access_token: "cs7929311353379d90697fc0b6",
