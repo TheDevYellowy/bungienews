@@ -1,7 +1,7 @@
 const { AtpAgent } = require("@atproto/api");
 const fs = require("node:fs");
 require("dotenv").config();
-const maxRetries = 5;
+const maxRetries = Number(process.argv[2] ?? 5);
 var retries = 0;
 var lastUpdate;
 const reposted = {};
@@ -14,28 +14,28 @@ const client = new AtpAgent({
   service: "https://bsky.social",
 });
 
-// client
-//   .login({
-//     identifier: process.env.email,
-//     password: process.env.password,
-//   })
-//   .then(async () => {
-// logs.write(`Successfully logged in to ${client.session.handle}\n`);
-// await init();
-getDataAndPost();
-// await repost();
-setInterval(async () => {
-  await getDataAndPost();
-}, 1000 * 60 * 30); // 30 minutes
+client
+  .login({
+    identifier: process.env.email,
+    password: process.env.password,
+  })
+  .then(async () => {
+    logs.write(`Successfully logged in to ${client.session.handle}\n`);
+    await init();
+    getDataAndPost();
+    await repost();
+    setInterval(async () => {
+      await getDataAndPost();
+    }, 1000 * 60 * 30); // 30 minutes
 
-// setInterval(async () => {
-//   await repost();
-// }, 1000 * 60 * 13); // 13 minutes
-// })
-// .catch((err) => {
-//   console.error({ err });
-//   process.exit();
-// });
+    setInterval(async () => {
+      await repost();
+    }, 1000 * 60 * 13); // 13 minutes
+  })
+  .catch((err) => {
+    console.error({ err });
+    process.exit();
+  });
 
 async function init() {
   const { success, data } = await client.getAuthorFeed({ actor: client.did });
@@ -67,20 +67,11 @@ async function repost() {
   }
 }
 
-async function alreadyPosted(url) {
-  const { success, data } = await client.getAuthorFeed({ actor: client.did });
-  let post = null;
-  let i = 0;
-  if (success) {
-    while (!post) {
-      if (i++ > data.feed.length) break;
-      if (data.feed[i].post.embed) post = data.feed[i].post;
-      else i++;
-    }
-    if (!post) return true;
-    if (post.embed.external.uri == url) return true;
-    else return false;
-  } else return true;
+function alreadyPosted(uid) {
+  return fs
+    .readdirSync("./src/data")
+    .map((n) => n.replace(/\.[^/.]+$/, ""))
+    .includes(`${uid}`);
 }
 
 async function getDataAndPost() {
@@ -106,6 +97,7 @@ async function getDataAndPost() {
     retries++;
     return getDataAndPost();
   });
+
   retries = 0;
   if (!postRequest) return;
   const postData = await postRequest.json();
@@ -122,10 +114,7 @@ async function getDataAndPost() {
   const imageBuffer = await imageRequest.arrayBuffer();
   const imageUint8 = new Uint8Array(imageBuffer);
 
-  // const posted = await alreadyPosted(
-  //   `https://www.bungie.net/7/en/News/article${latestPost.url.hosted_url}`
-  // );
-  const posted = false;
+  const posted = alreadyPosted(latestPost.uid);
 
   if (posted) {
     logs.write(`The post was already forwarded to Bluesky, exiting function\n`);
@@ -134,25 +123,25 @@ async function getDataAndPost() {
 
   try {
     logs.write("Attempting to post to bluesky\n");
-    // const { data } = await client.uploadBlob(imageUint8);
-    // const { uri, cid } = await client.post({
-    //   text: `New post on the bungie.net homepage\n${latestPost.title}`,
-    //   tags: ["bungie", "destiny2", "destinythegame"],
-    //   embed: {
-    //     $type: "app.bsky.embed.external",
-    //     external: {
-    //       uri: `https://www.bungie.net/7/en/News/article${latestPost.url.hosted_url}`,
-    //       title: latestPost.title,
-    //       description: latestPost.subtitle,
-    //       thumb: data.blob,
-    //     },
-    //   },
-    //   createdAt: new Date().toISOString(),
-    // });
+    const { data } = await client.uploadBlob(imageUint8);
+    const { uri, cid } = await client.post({
+      text: `New post on the bungie.net homepage\n${latestPost.title}`,
+      tags: ["bungie", "destiny2", "destinythegame"],
+      embed: {
+        $type: "app.bsky.embed.external",
+        external: {
+          uri: `https://www.bungie.net/7/en/News/article${latestPost.url.hosted_url}`,
+          title: latestPost.title,
+          description: latestPost.subtitle,
+          thumb: data.blob,
+        },
+      },
+      createdAt: new Date().toISOString(),
+    });
 
-    // await client.like(uri, cid);
+    await client.like(uri, cid);
 
-    logs.write(`Created post at ${new Date(lastUpdate).toString()}`);
+    logs.write(`Created post at ${new Date(lastUpdate).toString()}\n`);
     if (!fs.existsSync("./src/data"))
       fs.mkdirSync("./src/data", { recursive: true });
 
@@ -162,7 +151,7 @@ async function getDataAndPost() {
         JSON.stringify(latestPost, null, 2)
       );
   } catch (error) {
-    logs.write(`There was an error posting the news: ${error}`);
+    logs.write(`There was an error posting the news: ${error}\n`);
     console.error(`There was an error posting the news: ${error}`);
   }
 }
