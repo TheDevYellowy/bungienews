@@ -67,11 +67,19 @@ async function repost() {
   }
 }
 
-function alreadyPosted(uid) {
-  return fs
-    .readdirSync("./src/data")
-    .map((n) => n.replace(/\.[^/.]+$/, ""))
-    .includes(`${uid}`);
+async function alreadyPosted(url) {
+  let posted = false;
+  const { success, data } = await client.getAuthorFeed({
+    actor: client.did,
+    limit: 5,
+  });
+  if (success) {
+    data.feed.forEach((post) => {
+      if (post.post.embed.external.uri == url) posted = true;
+    });
+  }
+
+  return posted;
 }
 
 async function getDataAndPost() {
@@ -114,7 +122,9 @@ async function getDataAndPost() {
   const imageBuffer = await imageRequest.arrayBuffer();
   const imageUint8 = new Uint8Array(imageBuffer);
 
-  const posted = alreadyPosted(latestPost.uid);
+  const posted = await alreadyPosted(
+    `https://www.bungie.net/7/en/News/article${latestPost.url.hosted_url}`
+  );
 
   if (posted) {
     logs.write(`The post was already forwarded to Bluesky, exiting function\n`);
